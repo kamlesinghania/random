@@ -1,0 +1,44 @@
+def categorize_sentiment(scores):
+    positive = scores['positive']
+    neutral = scores['neutral']
+    negative = scores['negative']
+    diff_threshold = 0.1  # Threshold to consider for strong/weak differentiation
+
+    # Strong sentiments
+    if positive > 0.6 and positive > negative + diff_threshold:
+        return "Strongly Positive"
+    if negative > 0.6 and negative > positive + diff_threshold:
+        return "Strongly Negative"
+
+    # Weak sentiments
+    if positive > negative and positive > neutral:
+        return "Weakly Positive"
+    if negative > positive and negative > neutral:
+        return "Weakly Negative"
+
+    # Neutral or mixed
+    if abs(positive - negative) < diff_threshold:
+        return "Mixed" if neutral < 0.5 else "Neutral"
+
+    return "Neutral"
+
+Function Name: categorize_sentiment
+
+Purpose: To categorize the overall sentiment of a text into one of five categories: "Strongly Positive", "Weakly Positive", "Neutral", "Weakly Negative", or "Strongly Negative", based on the calculated average confidence scores for positive, neutral, and negative sentiments.
+
+Input:
+
+A dictionary containing average confidence scores for positive, neutral, and negative sentiments. Example: {'positive': 0.7, 'neutral': 0.2, 'negative': 0.1}
+Processing Logic:
+
+Define Thresholds: Set thresholds to differentiate between strong and weak sentiments. For example, a threshold might be set at 0.6 for strong sentiments.
+Compare Scores:
+If one of the scores (positive, neutral, negative) significantly outweighs the others, categorize the sentiment as strongly in that direction.
+If the scores are more balanced but one is slightly higher, categorize the sentiment as weakly in that direction.
+If the neutral score is high and there's no clear leaning towards positive or negative, categorize as neutral.
+Special Cases:
+If the positive and negative scores are very close to each other and relatively high, but the neutral score is low, categorize as "Mixed".
+Adjust logic based on specific business needs or observations from data.
+Output:
+
+A string representing the sentiment category. One of: "Strongly Positive", "Weakly Positive", "Neutral", "Weakly Negative", "Strongly Negative", or "Mixed".
