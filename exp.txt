@@ -1,0 +1,39 @@
+This Python script is designed to perform sentiment analysis on a set of documents using Azure's Text Analytics API. It includes functionality for batching requests, calculating costs, logging, and saving the results in a JSON format. Let's break down the key components of the script:
+
+Importing Libraries:
+
+os for accessing environment variables.
+json for handling JSON data.
+logging for logging messages.
+datetime for timestamping in logging.
+AzureKeyCredential and TextAnalyticsClient from azure.ai.textanalytics for interacting with the Azure Text Analytics API.
+Azure API Setup:
+
+Retrieves Azure credentials (key and endpoint) from environment variables.
+Initializes the TextAnalyticsClient with these credentials.
+Logging Configuration:
+
+Sets up logging to write messages to a file named 'sentiment_analysis.log'.
+Configures the log format to include timestamps.
+Cost Calculation:
+
+cost_per_1000_docs defines the cost per 1000 documents.
+calculate_cost function calculates the cost based on the number of documents.
+count_documents function counts the number of documents, considering each 1000-character segment as a separate document.
+Document Batching:
+
+create_batches function organizes documents into batches, adhering to the maximum number of documents per batch and maximum characters per document. It skips documents that exceed the character limit.
+Sentiment Analysis and Logging:
+
+The script processes each batch of documents, performing sentiment analysis using Azure's API.
+Logs information about each batch, including the number of documents, their lengths, and the estimated cost.
+After processing each batch, a line of dashes is logged for visual separation in the log file.
+Result Conversion and Saving:
+
+convert_to_json_serializable function converts the sentiment analysis results into a JSON serializable format.
+The results are saved to a file named 'sentiment_analysis_results.json'.
+Final Logging:
+
+Logs the total estimated cost and the total number of documents considered for pricing.
+Indicates the completion of the sentiment analysis process.
+This script is useful for analyzing sentiments of large sets of text data, with efficient handling of API requests and costs. It provides detailed logging for monitoring and debugging purposes and saves the analysis results in a structured JSON format.
