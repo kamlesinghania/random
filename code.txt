@@ -1,0 +1,336 @@
+import os
+import asyncio
+from openai import AsyncAzureOpenAI
+
+async def process_message(client, message):
+    response = await client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": message}]
+    )
+    return response.model_dump_json(indent=2)
+
+async def main():
+    client = AsyncAzureOpenAI(
+        api_key=os.getenv("AZURE_OPENAI_KEY"),
+        api_version="2023-10-01-preview",
+        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
+    )
+
+    # Example list of messages
+    messages = ["Hello world", "How's the weather?", "Tell me a joke"]
+
+    # Process each message asynchronously
+    responses = await asyncio.gather(
+        *[process_message(client, message) for message in messages]
+    )
+
+    for response in responses:
+        print(response)
+
+asyncio.run(main())
+
+
+
+
+
+
+from dotenv import dotenv_values
+config=dotenv_values(".env")
+import os
+from openai import OpenAI
+
+client = OpenAI(
+  api_key=config['key'],  # this is also the default, it can be omitted
+)
+
+response = client.chat.completions.create(
+  model="gpt-3.5-turbo",
+  messages=[
+    {
+      "role": "system",
+      "content":"""Classify user text based on support for the proposal: dogs should be restricted from certain areas. Use these guidelines:
+
+Strongly Agree: Explicit, emphatic support for the proposal.
+Agree: General support for the proposal. This includes interpreting sarcastic or rhetorical remarks as agreement if they imply that the alternative to the proposal is unreasonable or undesirable.
+Neutral: Ambiguous or no clear position on the proposal.
+Disagree: Opposes the proposal, directly or through positive mentions of opposing aspects.
+Strongly Disagree: Explicit, emphatic opposition to the proposal.
+When evaluating sarcasm or rhetorical language, focus on the implied stance rather than the literal wording. For example, a sarcastic remark suggesting an extreme alternative to the proposal likely indicates agreement with the proposal.
+
+Output format:
+Answer:
+Reason: """
+    },
+    {
+      "role": "user",
+      "content": "For the people against it, let dogs rule you then"
+    }
+  ],
+  temperature=0.09,
+  max_tokens=20,
+  top_p=0.09,
+  frequency_penalty=0,
+  presence_penalty=0
+)
+
+
+
+
+
+pip install tiktoken
+import tiktoken
+def num_tokens(string):
+    enc= tiktoken.encoding_for_model("gpt-3.5-turbo")
+    return len(enc.encode(string))
+price_per_token=0.0023/1000
+
+
+
+import tiktoken
+def num_tokens_from_messages(messages, model="gpt-3.5-turbo"):
+    """Return the number of tokens used by a list of messages."""
+    try:
+        encoding = tiktoken.encoding_for_model(model)
+    except KeyError:
+        print("Warning: model not found. Using cl100k_base encoding.")
+        encoding = tiktoken.get_encoding("cl100k_base")
+    if model in {
+        "gpt-3.5-turbo-0613",
+        "gpt-3.5-turbo-16k-0613",
+        "gpt-4-0314",
+        "gpt-4-32k-0314",
+        "gpt-4-0613",
+        "gpt-4-32k-0613",
+        }:
+        tokens_per_message = 3
+        tokens_per_name = 1
+    elif model == "gpt-3.5-turbo-0301":
+        tokens_per_message = 4  # every message follows <|start|>{role/name}\n{content}<|end|>\n
+        tokens_per_name = -1  # if there's a name, the role is omitted
+    elif "gpt-3.5-turbo" in model:
+        print("Warning: gpt-3.5-turbo may update over time. Returning num tokens assuming gpt-3.5-turbo-0613.")
+        return num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613")
+    elif "gpt-4" in model:
+        print("Warning: gpt-4 may update over time. Returning num tokens assuming gpt-4-0613.")
+        return num_tokens_from_messages(messages, model="gpt-4-0613")
+    else:
+        raise NotImplementedError(
+            f"""num_tokens_from_messages() is not implemented for model {model}. See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens."""
+        )
+    num_tokens = 0
+    for message in messages:
+        num_tokens += tokens_per_message
+        for key, value in message.items():
+            num_tokens += len(encoding.encode(value))
+            if key == "name":
+                num_tokens += tokens_per_name
+    num_tokens += 3  # every reply is primed with <|start|>assistant<|message|>
+    return num_tokens
+
+
+
+
+
+you are an assistant tasked with classifying user text based on their support for a given proposal. The proposal is that "dogs should be restricted from certain areas". Use the following guidelines to determine the classification:
+
+Strongly Agree: The text explicitly and emphatically supports the proposal.
+Agree: The text supports the proposal, but without strong emphasis or only indirectly. This includes rhetorical or sarcastic remarks that imply support for the proposal.
+Neutral: The text neither clearly supports nor clearly opposes the proposal, or it is ambiguous.
+Disagree: The text opposes the proposal, either by highlighting positive aspects that contradict the proposal or by indirectly suggesting that the proposal is unnecessary, even if not stated explicitly.
+Strongly Disagree: The text explicitly and emphatically opposes the proposal.
+When evaluating the text, consider both direct statements and indirect implications, including the tone, sarcasm, and rhetorical devices used. Statements that use sarcasm or rhetorical questions to ultimately support the proposal should be classified as 'Agree' or 'Strongly Agree.'
+
+Desired Format for output:
+Answer:
+
+
+
+
+Classify user text based on support for the proposal: dogs should be restricted from certain areas. Use these guidelines:
+
+Strongly Agree: Explicit, emphatic support for the proposal.
+Agree: General support for the proposal. This includes interpreting sarcastic or rhetorical remarks as agreement if they imply that the alternative to the proposal is unreasonable or undesirable.
+Neutral: Ambiguous or no clear position on the proposal.
+Disagree: Opposes the proposal, directly or through positive mentions of opposing aspects.
+Strongly Disagree: Explicit, emphatic opposition to the proposal.
+When evaluating sarcasm or rhetorical language, focus on the implied stance rather than the literal wording. For example, a sarcastic remark suggesting an extreme alternative to the proposal likely indicates agreement with the proposal.
+
+Output format:
+Answer:
+Reason:
+
+
+
+
+Classify user text based on support for the proposal: dogs should be restricted from certain areas. Use these guidelines:
+
+Strongly Agree: Explicit, emphatic support for the proposal.
+Agree: General support for the proposal. This includes interpreting sarcastic or rhetorical remarks as agreement if they imply that the alternative to the proposal is unreasonable or undesirable.
+Neutral: Ambiguous or no clear position on the proposal.
+Disagree: Opposes the proposal, directly or through positive mentions of opposing aspects.
+Strongly Disagree: Explicit, emphatic opposition to the proposal.
+When evaluating sarcasm or rhetorical language, focus on the implied stance rather than the literal wording. For example, a sarcastic remark suggesting an extreme alternative to the proposal likely indicates agreement with the proposal.
+
+Output format:
+Answer:
+Reason:
+
+
+
+write a balanced prompt or try mixed as well
+
+
+
+
+##########################
+
+Finally seperated api logic from data processing
+incorporated logging to track num, pricing, errors and etc.
+Implemented async which enabled sending documents larger than 5120 in length, the new limit is 120000
+saved the response as a json file so that we can try different techniques/algorithms on the the output without making a call to the api again
+
+
+it can help in designing better surveys usually a neutral tone in the questionaire
+
+	•	Determine the overall sentiment (positive, neutral, negative) of your dataset. This can be useful for understanding general customer sentiment towards a product, service, or brand.
+	•	You can calculate the percentage of documents with each sentiment type to get a high-level view of sentiment distribution.
+ Fine-grained Sentiment Analysis:
+	•	Analyze the confidence scores for each sentiment to understand the strength of the sentiments expressed.
+	•	This can help in identifying not just whether sentiments are positive or negative, but also how strongly these sentiments are expressed.
+
+mined_opinions to understand sentiments about specific aspects or features For instance, you might find that while customers are generally positive about the 'hotel', they have negative sentiments about 'hygiene'.
+
+
+Trend Analysis Over Time:
+	•	If your data is timestamped, you can perform trend analysis to see how sentiments change over time.
+	•	This can be particularly insightful to see the impact of changes in your services or products, or to understand how public perception shifts.
+
+	•	You can look for correlations between sentiment and other data points you might have (like customer demographics, purchase history, etc.).
+	•	This can reveal insights like whether certain products are favored by specific demographic groups.
+	•	Extract common keywords or phrases from texts with similar sentiments.
+	•	This can help identify what terms are most associated with positive or negative sentiments.
+Geographic data as well
+
+
+Designing a questionnaire to capture data for sentiment analysis on infrastructure projects involves crafting questions that elicit clear, detailed, and relevant responses. Here are some guidelines and sample questions to consider:
+
+
+General Guidelines:
+		Clarity and Simplicity: Questions should be straightforward and easy to understand.
+		Open-Ended Questions: These allow respondents to express their opinions and feelings in detail.
+		Closed-Ended Questions: Useful for gathering quantitative data that can be easily analyzed for trends.
+		Rating Scales: Likert scales (e.g., 1-5 rating) are useful for gauging the intensity of sentiments.
+		Demographic Questions: Include these to enable demographic-based analysis, but ensure they respect privacy and are optional.
+		Avoid Leading Questions: Ensure questions are neutral and don’t bias the respondent towards a particular response.
+		Multiple Aspects: Cover various aspects of the infrastructure projects, such as design, accessibility, environmental impact, etc.
+Sample Questionnaire:
+		General Feedback:
+	•	"What are your overall thoughts on the [specific infrastructure project]?"
+	•	"How would you describe your overall satisfaction with the current infrastructure in your area?"
+		Aspect-Specific Questions:
+	•	"How satisfied are you with the safety features of the new infrastructure?"
+	•	"What is your opinion on the environmental impact of the recent infrastructure developments?"
+		Rating Questions:
+	•	"On a scale of 1-5, how would you rate the accessibility of the new [infrastructure project]?"
+	•	"Please rate the aesthetic appeal of the recent infrastructure projects in your area (1 being very poor, 5 being excellent)."
+		Open-Ended for Detailed Insights:
+	•	"What improvements would you like to see in future infrastructure projects?"
+	•	"Please share any specific concerns or suggestions you have about [specific aspect of the project]."
+		Impact Questions:
+	•	"How has the new [infrastructure project] affected your daily life?"
+	•	"What impact do you think the [project] has had on the local community?"
+		Demographic Questions (if relevant and ethical):
+	•	"What is your age group?"
+	•	"Which area/neighborhood do you reside in?"
+		Future Oriented:
+	•	"What types of infrastructure projects would you like to see prioritized in the future?"
+	•	"Are there any specific areas or issues you feel need more attention in terms of infrastructure development?"
+Additional Tips:
+	•	Pilot Test: Before finalizing the questionnaire, conduct a pilot test with a small group to identify any confusing or ambiguous questions.
+	•	Anonymity and Consent: Clearly state how the data will be used and ensure respondents' privacy and consent, especially if personal or demographic information is collected.
+	•	Accessibility: Make sure the questionnaire is accessible to people with disabilities and is available in different languages if needed to reach a broader demographic.
+A well-designed questionnaire will provide rich data that can be effectively analyzed for sentiment and other insights, aiding in informed decision-making and community-responsive planning.
+
+
+
+
+
+
+
+
+Certainly! Let's perform a comprehensive analysis on your JSON data from the sentiment analysis. The data includes overall sentiment, confidence scores, and mined opinions for each document. We'll focus on extracting actionable insights that can inform decision-making. Here's a step-by-step analysis plan:
+1. Overall Sentiment Distribution
+First, analyze the overall sentiment distribution across all documents.
+	•	Objective: Understand the general sentiment (positive, negative, neutral) towards the infrastructure projects.
+	•	Method: Count the number of documents with each sentiment type and calculate the percentage.
+	•	Insight: Identify which aspects of the infrastructure projects are well-received and which are sources of concern.
+2. Aspect-Based Sentiment Analysis
+Dive into the mined_opinions to analyze sentiments about specific aspects of infrastructure.
+	•	Objective: Pinpoint specific features or aspects receiving positive or negative feedback (e.g., safety, design, accessibility).
+	•	Method: Aggregate sentiments related to each identified aspect and analyze the trends.
+	•	Insight: Understand detailed public opinion on different aspects of the infrastructure projects.
+3. Sentiment Intensity Analysis
+Examine the confidence scores for a more nuanced understanding of sentiments.
+	•	Objective: Gauge the intensity of positive and negative sentiments.
+	•	Method: Analyze the confidence scores for each sentiment to identify strongly and weakly held opinions.
+	•	Insight: Determine which issues or features evoke strong emotions in the community.
+4. Comparative Analysis (If Applicable)
+If the data includes feedback on both existing and new infrastructure, compare the sentiments.
+	•	Objective: Compare public sentiment towards existing infrastructure versus new projects.
+	•	Method: Segment the data into existing vs. new infrastructure and compare the sentiment distribution.
+	•	Insight: Identify if new projects are meeting or falling short of community expectations compared to existing infrastructure.
+5. Keyword and Phrase Analysis
+Identify common keywords and phrases in positive and negative feedback.
+	•	Objective: Discover recurring themes or issues in the feedback.
+	•	Method: Use text analysis to extract common keywords and phrases from positive and negative feedback.
+	•	Insight: Pinpoint specific terms or phrases frequently associated with positive or negative sentiments.
+6. Detailed Reporting
+Create a detailed report or visualization combining the above analyses.
+	•	Objective: Provide a comprehensive view of the sentiment analysis results.
+	•	Method: Use data visualization tools to create charts and graphs that illustrate the findings.
+	•	Insight: Offer a visual and easy-to-understand representation of public opinion on the infrastructure projects.
+Implementation in Python
+Here's a basic implementation framework in Python:
+import json
+import pandas as pd
+from collections import Counter
+
+# Load JSON data
+with open('sentiment_analysis_results.json') as file:
+    data = json.load(file)
+
+# Convert to DataFrame for easier analysis
+df = pd.json_normalize(data, record_path=['sentences'], 
+                       meta=['document_text', ['confidence_scores', 'positive'], 
+                             ['confidence_scores', 'neutral'], 
+                             ['confidence_scores', 'negative'], 'sentiment'])
+
+# Analysis 1: Overall Sentiment Distribution
+sentiment_distribution = df['sentiment'].value_counts(normalize=True) * 100
+
+# Analysis 2: Aspect-Based Sentiment Analysis
+# Extract aspects and their sentiments
+aspects = []
+for sentence in data:
+    for opinion in sentence.get('mined_opinions', []):
+        aspects.append((opinion['target']['text'], opinion['target']['sentiment']))
+aspect_sentiment = Counter(aspects)
+
+# ... (further analyses and visualizations)
+
+# Save or display the insights
+print("Sentiment Distribution:\n", sentiment_distribution)
+print("Aspect-Based Sentiment Analysis:\n", aspect_sentiment)
+# ... (other insights)
+
+
+This analysis plan and implementation provide a robust understanding of public sentiment towards infrastructure projects, highlighting areas of success and opportunities for improvement. The insights gained can be instrumental in guiding future infrastructure development and addressing public concerns effectively.
+
+
+
+
+####
+OpenAI's API can be particularly useful. For example, if the feedback contains sarcasm, idiomatic expressions, or references to external events, the contextual understanding of OpenAI's models can provide more accurate sentiment analysis than traditional methods.
+
+
+
