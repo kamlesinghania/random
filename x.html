@@ -1,0 +1,135 @@
+import streamlit as st
+
+st.set_page_config(page_title="Sunny The Bot", page_icon=":sun:", layout="wide")
+
+
+
+# Custom CSS to hide Streamlit's default header, footer, and sidebar more aggressively, and make the navbar sticky at the top
+hide_streamlit_style = """
+            <style>
+            /* Hide the header with Streamlit logo and menu */
+            header {visibility: hidden;}
+            /* Hide the sidebar and the expand/collapse button */
+            .css-1d391kg, .css-1y0tads, .css-1v3fvcr, .css-1ijy9b8, .css-1dbjc4n {display: none !important;}
+            /* Sticky navbar styles */
+            .navbar {
+                position: fixed;
+                top: 0;
+                width: 100%;
+                z-index: 999;
+                background-color: #007bff; /* Bootstrap primary color */
+                padding: 0.5rem 1rem;
+                display: flex;
+                align-items: center;
+                justify-content: start;
+                border-bottom: 1px solid #dee2e6; /* Add a border or shadow for better separation */
+            }
+            .navbar img {
+                height: 40px; /* Adjust based on your logo size */
+                margin-right: 1rem;
+            }
+            .nav-link {
+                color: white;
+                padding: 8px;
+                text-decoration: none;
+                margin-right: 1rem;
+                transition: background-color 0.2s ease-in-out;
+            }
+            .nav-link:hover, .nav-link:focus {
+                background-color: #0056b3; /* Darker shade for hover/focus */
+            }
+            /* Adjust the padding of the main content to prevent it from being hidden under the navbar */
+            .stApp {
+                padding-top: 35px;
+            }
+            /* Feature card styles */
+            .feature-card {
+                background-color: white;
+                border: 1px solid #dee2e6; /* Bootstrap-like border color */
+                border-radius: 0.25rem;
+                padding: 1rem;
+                margin-bottom: 1rem;
+                transition: box-shadow 0.2s ease-in-out;
+            }
+            .feature-card:hover {
+                box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15); /* Bootstrap-like shadow on hover */
+            }
+            .feature-link {
+                color: inherit; /* Bootstrap-like link color */
+                text-decoration: none; /* Remove underline */
+            }
+            .feature-title {
+                color: #007bff; /* Bootstrap primary color for titles */
+            }
+            /* Hide the hero image column on screen widths less than 768px */
+            @media (max-width: 768px) {
+                .hero-image-col {
+                    display: none;
+                }
+            }
+            .hero-image-col {
+                    height: 80vh;
+                }
+            /* Adjust the padding of the main content */
+            .stApp {
+                padding-top: 35px;
+            }
+            a:link {
+                color: black;
+                text-decoration: none;
+                
+            }
+            a:visited {
+                color: black;
+                text-decoration: none;
+            }
+            </style>
+            """
+
+# Inject custom CSS
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+# Custom HTML for the navbar
+navbar_html = """
+<div class="navbar">
+    <img src="app/static/hero.svg" alt="logo"> <!-- Replace with the actual path to your logo -->
+    <a class="nav-link" href="#">Home</a>
+    <a class="nav-link" href="#">Features</a>
+    <a class="nav-link" href="#">About</a>
+    <a class="nav-link" href="#">Contact</a>
+</div>
+"""
+
+# Inject custom HTML for the navbar
+st.markdown(navbar_html, unsafe_allow_html=True)
+
+# Example feature cards setup
+features = [
+    {"title": "Feature 1", "description": "Description of Feature 1", "url": "/chat"},
+    {"title": "Feature 2", "description": "Description of Feature 2", "url": "/app"},
+]
+
+# Layout for the hero image and feature cards
+col1, col2 = st.columns([0.5, 0.5])
+
+with col1:
+    # st.image("./static/image.png", use_column_width=True)  # Replace with your actual hero image path
+    st.markdown("""
+<img class="hero-image-col" src="app/static/image.png">
+""", unsafe_allow_html=True)
+with col2:
+    for feature in features:
+        feature_card_html = f"""
+        <a href="{feature['url']}" class="feature-link" target="_self">
+            <div class="feature-card">
+                <h4 class="feature-title">{feature['title']}</h4>
+                <p>{feature['description']}</p>
+            </div>
+        </a>
+        """
+        st.markdown(feature_card_html, unsafe_allow_html=True)
+
+
+enableStaticServing = true
+enableXsrfProtection=false
+enableCORS=false
