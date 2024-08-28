@@ -1,0 +1,101 @@
+import pandas as pd
+import openpyxl
+from openpyxl.styles import Font
+from langchain.llms import OpenAI
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.chains.summarize import load_summarize_chain
+import numpy as np
+import os
+
+# Set your OpenAI API key
+os.environ["OPENAI_API_KEY"] = "your-api-key-here"
+
+# Initialize OpenAI language model and embeddings
+llm = OpenAI(temperature=0)
+embeddings = OpenAIEmbeddings()
+
+# Function to get closest 10 issues and summarize them
+def summarize_closest_issues(issue, all_sub_issues):
+    # Get embeddings for all sub-issues
+    all_embeddings = embeddings.embed_documents(all_sub_issues)
+    
+    # Get embedding for the current issue
+    issue_embedding = embeddings.embed_query(issue)
+    
+    # Calculate cosine similarities
+    similarities = [np.dot(issue_embedding, emb) / (np.linalg.norm(issue_embedding) * np.linalg.norm(emb)) for emb in all_embeddings]
+    
+    # Get indices of top 10 closest issues
+    top_10_indices = np.argsort(similarities)[-10:]
+    
+    # Get the 10 closest issues
+    closest_issues = [all_sub_issues[i] for i in top_10_indices]
+    
+    # Summarize the closest issues
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    texts = text_splitter.create_documents(closest_issues)
+    chain = load_summarize_chain(llm, chain_type="map_reduce")
+    summary = chain.run(texts)
+    
+    return summary
+
+# Assuming you have already loaded issue_themes and the additional dataframe
+# If not, load them first
+
+# Create a list to store all rows
+rows = []
+
+# Collect all sub-issues
+all_sub_issues = []
+
+# Iterate through the issue_themes dictionary
+for category, issues in issue_themes.items():
+    for issue in issues:
+        row = [category, issue]
+        
+        # Check if this issue has sub-issues in the additional dataframe
+        if issue in additional_df.index:
+            sub_issues = additional_df.loc[issue, 'sub_issues'].split(',')  # Adjust this based on your dataframe structure
+            row.extend(sub_issues)
+            all_sub_issues.extend(sub_issues)
+        
+        rows.append(row)
+
+# Create a DataFrame
+df = pd.DataFrame(rows)
+
+# Rename columns
+df.columns = ['Category', 'Issue'] + [f'Sub-Issue {i+1}' for i in range(df.shape[1]-2)]
+
+# Add summary column
+df['Summary'] = df['Issue'].apply(lambda x: summarize_closest_issues(x, all_sub_issues))
+
+# Save to Excel
+excel_file = 'issue_themes_hierarchy_with_summary.xlsx'
+df.to_excel(excel_file, index=False, engine='openpyxl')
+
+# Optionally, you can format the Excel file for better readability
+wb = openpyxl.load_workbook(excel_file)
+ws = wb.active
+
+# Make the header row bold
+for cell in ws[1]:
+    cell.font = Font(bold=True)
+
+# Auto-adjust column widths
+for column in ws.columns:
+    max_length = 0
+    column_letter = column[0].column_letter
+    for cell in column:
+        try:
+            if len(str(cell.value)) > max_length:
+                max_length = len(cell.value)
+        except:
+            pass
+    adjusted_width = (max_length + 2) * 1.2
+    ws.column_dimensions[column_letter].width = adjusted_width
+
+wb.save(excel_file)
+
+print(f"Excel file '{excel_file}' has been created with the issue hierarchy and summaries.")
